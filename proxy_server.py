@@ -1,23 +1,30 @@
 from flask import Flask, request, jsonify
 import requests
+import os
 
 app = Flask(__name__)
 
-@app.route('/price')
+@app.route('/')
+def home():
+    return jsonify({"message": "Crypto Proxy API is live 🔥"})
+
+@app.route('/price-data')
 def get_price_data():
     symbol = request.args.get('symbol')
-    if not symbol:
-        return jsonify({'error': 'symbol parameter is required'}), 400
     interval = request.args.get('interval', '15m')
     limit = request.args.get('limit', '100')
 
-    url = f'https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}'
+    if not symbol:
+        return jsonify({"error": "Symbol parameter is required"}), 400
+
+    url = f'https://api.binance.com/api/v3/klines?symbol={symbol}USDT&interval={interval}&limit={limit}'
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url)
         response.raise_for_status()
         return jsonify(response.json())
-    except requests.exceptions.RequestException as e:
-        return jsonify({'error': f'Error fetching data: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
